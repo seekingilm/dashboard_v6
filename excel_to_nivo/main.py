@@ -40,9 +40,6 @@ def process_clean_data_for_bar1():
     q9_parent = masterData['Q9_parent_Guardian']
     q9_unknown = masterData['Q9) unknown_Q9']
 
-    owner_np = Owner.to_numpy()[~np.isnan(Owner.to_numpy())]
-    q9_phone_np = q9_phone.to_numpy()[~np.isnan(q9_phone.to_numpy())]
-    owner_np, q9_phone_np = match_length(owner_np, q9_phone_np)
 
     roles_how_informed_data = [{
                     "role": "Owner", 
