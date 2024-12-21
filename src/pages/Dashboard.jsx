@@ -225,7 +225,7 @@ const Dashboard = () => {
             <Box sx={{ height: 350 }}>
               <ResponsiveBar
                 data={barData2}
-                keys={['family', 'cell_words', 'parent', 'alert', 'tv', 'unknown']}
+                keys={['radio', 'parent', 'others_words', 'supervisor', 'family']}
                 indexBy="role"
                 margin={{ top: 20, right: 130, bottom: 50, left: 60 }}
                 padding={0.3}

@@ -1,60 +1,169 @@
-from flask import Flask, jsonify
+from flask import Flask
 import pandas as pd
+from flask import jsonify
+import numpy as np
 from flask_cors import CORS
 
 app = Flask(__name__)
 CORS(app)
 
-# Function to normalize the counts for each role
-def normalize_counts(data):
-    """
-    Normalize the counts so that the sum of counts in each role is equal to 100%.
-    """
-    normalized_data = []
+def percentage_helper(list1, listy2):
+    if(round(list1.corr(listy2), 2) < 0):
+        return 0
+    else:
+        return round(round(list1.corr(listy2), 2) * len(list1), 2)
 
-    # Iterate over each role's data
-    for role_data in data:
-        total_count = sum(role_data[col] for col in role_data if col != 'role')
+def percentage_maker(full_db, role, segement):
+    count = 0
 
-        # Normalize each category
-        normalized_role_data = {'role': role_data['role']}
-        if total_count > 0:
-            for col in role_data:
-                if col != 'role':
-                    normalized_role_data[col] = round((role_data[col] / total_count) * 100, 2)
-        else:
-            for col in role_data:
-                if col != 'role':
-                    normalized_role_data[col] = 0
+    for i in range(len(full_db)-1):
+        row = full_db[i: i+1]
+        
+        value_role = float(row[role].values) 
+        value_segement = float(row[segement].values)
 
-        normalized_data.append(normalized_role_data)
+        if(value_role == value_segement and value_segement == 1):
+            count = count + 1
 
-    return normalized_data
+
+    return count 
+
+def object_normalizer(item):
+    total = item['parent'] + item['unknown'] + item['tv'] + item['phone'] + item['news'] + item['family']; 
+    
+    item['phone'] = round(round(item['phone']/total,2) * 100)
+    item['news'] = round(round(item['news']/total, 2) * 100)
+    item['tv'] = round(round(item['tv']/total, 2) * 100)
+    item['family'] = round(round(item['family']/total, 2) * 100)
+    item['parent'] = round(round(item['parent']/total, 2) * 100)
+    item['unknown'] = round(round(item['unknown']/total, 2) * 100)
+
+    return item
+
+def object_normalizer_bar2(item):
+    total = item['parent'] + item['unknown'] + item['tv'] + item['phone'] + item['news'] + item['family']; 
+    
+    item['phone'] = round(round(item['phone']/total,2) * 100)
+    item['news'] = round(round(item['news']/total, 2) * 100)
+    item['tv'] = round(round(item['tv']/total, 2) * 100)
+    item['family'] = round(round(item['family']/total, 2) * 100)
+    item['parent'] = round(round(item['parent']/total, 2) * 100)
+    item['unknown'] = round(round(item['unknown']/total, 2) * 100)
+
+    return item
 
 @app.route("/bar1")
 def process_clean_data_for_bar1():
-    # Read the Excel file containing the raw data
-    masterData = pd.read_excel('masterData.xlsx')
-
-    # Print the column names to understand the structure
-    print(masterData.columns)
-
-    # Assuming the first column contains roles and subsequent columns contain counts for each alert word type
-    roles = masterData['Role']  # Replace 'Role' with the actual column name for roles (e.g., 'Column1', 'Role', etc.)
+    masterData = pd.read_excel('masterData.xlsx', index_col=0)
+    print(percentage_maker(masterData, 'Q3)  role_Owner', 'Q9a) event_Notification_Cellphone_Alert'))
+    print(percentage_maker(masterData, 'Q3)  role_Owner', 'Q9_computer_Alert_news'))
     
-    # Create a list of dictionaries with counts for each role
-    data = []
-    for i, role in enumerate(roles):
-        role_data = {'role': role}
-        for col in masterData.columns[1:]:  # Skip the first column which is the role column
-            role_data[col] = masterData.iloc[i][col]
-        data.append(role_data)
+    Owner = 'Q3)  role_Owner'
+    Manager = 'Q3)  role_Manager'
+    Teacher = 'Q3) role_Teacher'
+    Other = 'Q3) other_Role'
 
-    # Normalize the counts
-    normalized_data = normalize_counts(data)
+    q9_phone = 'Q9a) event_Notification_Cellphone_Alert'
+    q9_news = 'Q9_computer_Alert_news'
+    q9_tv = 'Q9_television_Radio '
+    q9_family = 'Q9)friends_Family'
+    q9_parent = 'Q9_parent_Guardian'
+    q9_unknown = 'Q9) unknown_Q9'
 
-    # Return the normalized data as JSON
-    return jsonify(normalized_data)
+    #pd.crosstab(Q9_computer_Alert_words, Other)
+    
+    roles_how_informed_data = [object_normalizer({
+                    "role": "Owner", 
+                    "phone": percentage_maker(masterData, Owner, q9_phone), 
+                    "news": percentage_maker(masterData, Owner, q9_news),
+                    "tv": percentage_maker(masterData, Owner, q9_tv),
+                    "family": percentage_maker(masterData, Owner, q9_family),
+                    "parent": percentage_maker(masterData, Owner, q9_parent),
+                    "unknown": percentage_maker(masterData, Owner, q9_unknown),
+                    }),
+                    object_normalizer({
+                    "role": "Manager", 
+                    "phone": percentage_maker(masterData, Manager, q9_phone), 
+                    "news": percentage_maker(masterData, Manager, q9_news),
+                    "tv": percentage_maker(masterData, Manager, q9_tv),
+                    "family": percentage_maker(masterData, Manager, q9_family),
+                    "parent": percentage_maker(masterData, Manager, q9_parent),
+                    "unknown": percentage_maker(masterData, Manager, q9_unknown),
+                    }),
+                    object_normalizer({
+                    "role": "Teacher", 
+                    "phone": percentage_maker(masterData, Teacher, q9_phone), 
+                    "news": percentage_maker(masterData, Teacher, q9_news),
+                    "tv": percentage_maker(masterData, Teacher, q9_tv),
+                    "family": percentage_maker(masterData, Teacher, q9_family),
+                    "parent": percentage_maker(masterData, Teacher, q9_parent),
+                    "unknown": percentage_maker(masterData, Teacher, q9_unknown),
+                    }), 
+                    object_normalizer({
+                    "role": "Other", 
+                    "phone": percentage_maker(masterData, Other, q9_phone), 
+                    "news": percentage_maker(masterData, Other, q9_news),
+                    "tv": percentage_maker(masterData, Other, q9_tv),
+                    "family": percentage_maker(masterData, Other, q9_family),
+                    "parent": percentage_maker(masterData, Other, q9_parent),
+                    "unknown": percentage_maker(masterData, Other, q9_unknown),
+                    }), 
+                   ]
+
+    return jsonify(roles_how_informed_data)
+
+@app.route("/bar2")
+def process_clean_data_for_bar2():
+    masterData = pd.read_excel('masterData.xlsx', index_col=0)
+
+    Owner = 'Q3)  role_Owner'
+    Manager = 'Q3)  role_Manager'
+    Teacher = 'Q3) role_Teacher'
+    Other = 'Q3) other_Role'
+
+    Q10_Television_Radio_words = 'Q10_Television_Radio_words'
+    Q10_Parent_Guardian_words = 'Q10_Parent_Guardian_words'
+    Q10_Other_words = 'Q10_Other_words'
+    Q10_Family_Friend_words = 'Q10_Family_Friend_words'
+    Q10_Supervisor_words = 'Q10_Supervisor_words'
+    
+    roles_how_informed_data = [{
+                    "role": "Owner", 
+                    "radio": percentage_maker(masterData, Owner, Q10_Television_Radio_words ), 
+                    "parent": percentage_maker(masterData, Owner,Q10_Parent_Guardian_words),
+                    "others_words": percentage_maker(masterData, Owner, Q10_Other_words ),
+                    "supervisor": percentage_maker(masterData, Owner, Q10_Supervisor_words),
+                    "family": percentage_maker(masterData, Owner, Q10_Family_Friend_words ),
+                    },
+                    {
+                    "role": "Manager", 
+                    "radio": percentage_maker(masterData, Manager, Q10_Television_Radio_words ), 
+                    "parent": percentage_maker(masterData, Manager,Q10_Parent_Guardian_words),
+                    "others_words": percentage_maker(masterData, Manager, Q10_Other_words ),
+                    "supervisor": percentage_maker(masterData, Manager, Q10_Supervisor_words),
+                    "family": percentage_maker(masterData, Manager, Q10_Family_Friend_words ),
+                    },
+                    {
+                    "role": "Teacher", 
+                    "radio": percentage_maker(masterData, Teacher, Q10_Television_Radio_words ), 
+                    "parent": percentage_maker(masterData, Teacher,Q10_Parent_Guardian_words),
+                    "others_words": percentage_maker(masterData, Teacher, Q10_Other_words ),
+                    "supervisor": percentage_maker(masterData, Teacher, Q10_Supervisor_words),
+                    "family": percentage_maker(masterData, Teacher, Q10_Family_Friend_words ),
+                    }, 
+                    {
+                    "role": "Other", 
+                    "radio": percentage_maker(masterData, Other, Q10_Television_Radio_words ), 
+                    "parent": percentage_maker(masterData, Other,Q10_Parent_Guardian_words),
+                    "others_words": percentage_maker(masterData, Other, Q10_Other_words ),
+                    "supervisor": percentage_maker(masterData, Other, Q10_Supervisor_words),
+                    "family": percentage_maker(masterData, Other, Q10_Family_Friend_words ),
+                    }, 
+                   ]
+
+    return jsonify(roles_how_informed_data)
+
+
 
 if __name__ == '__main__':
-    app.run(debug=True)
+        app.run(debug=True)
