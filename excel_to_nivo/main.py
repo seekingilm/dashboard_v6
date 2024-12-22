@@ -7,25 +7,29 @@ from flask_cors import CORS
 app = Flask(__name__)
 CORS(app)
 
-def percentage_helper(list1, listy2):
-    if(round(list1.corr(listy2), 2) < 0):
-        return 0
-    else:
-        return round(round(list1.corr(listy2), 2) * len(list1), 2)
-
 def percentage_maker(full_db, role, segement):
     count = 0
+    bar1_set = ['Q9a) event_Notification_Cellphone_Alert','Q9_computer_Alert_news', 
+                'Q9_television_Radio ','Q9)friends_Family','Q9_parent_Guardian','Q9) unknown_Q9']
 
-    for i in range(len(full_db)-1):
-        row = full_db[i: i+1]
-        
-        value_role = float(row[role].values) 
-        value_segement = float(row[segement].values)
+    if segement in bar1_set:
+        for i in range(len(full_db)-1):
+            row = full_db[i: i+1]
 
-        if(value_role == value_segement and value_segement == 1):
-            count = count + 1
+            value_role = float(row[role].values) 
+            value_segement = float(row[segement].values)
 
+            if(value_role == value_segement and value_segement == 1):
+                count = count + 1
+    else:
+        for i in range(len(full_db)-1):
+            row = full_db[i: i+1]
 
+            if('[nan]' != str(row[segement].to_numpy()) and float(row[role].to_numpy()) == 1.0):
+                print(f"the segement is {str(row[segement].to_numpy())} and the role is {float(row[role].to_numpy())}")
+                count = count + 1
+
+    print(count)
     return count 
 
 def object_normalizer(item):
@@ -41,14 +45,14 @@ def object_normalizer(item):
     return item
 
 def object_normalizer_bar2(item):
-    total = item['parent'] + item['unknown'] + item['tv'] + item['phone'] + item['news'] + item['family']; 
+    total = item['radio'] + item['parent'] + item['others_words'] + item['supervisor'] + item['family'] 
+    print(total)
     
-    item['phone'] = round(round(item['phone']/total,2) * 100)
-    item['news'] = round(round(item['news']/total, 2) * 100)
-    item['tv'] = round(round(item['tv']/total, 2) * 100)
-    item['family'] = round(round(item['family']/total, 2) * 100)
+    item['radio'] = round(round(item['radio']/total,3) * 100)
     item['parent'] = round(round(item['parent']/total, 2) * 100)
-    item['unknown'] = round(round(item['unknown']/total, 2) * 100)
+    item['others_words'] = round(round(item['others_words']/total, 2) * 100)
+    item['supervisor'] = round(round(item['supervisor']/total, 2) * 100)
+    item['family'] = round(round(item['family']/total, 2) * 100)
 
     return item
 
@@ -127,43 +131,38 @@ def process_clean_data_for_bar2():
     Q10_Family_Friend_words = 'Q10_Family_Friend_words'
     Q10_Supervisor_words = 'Q10_Supervisor_words'
     
-    roles_how_informed_data = [{
+    roles_how_informed_data = [object_normalizer_bar2({
                     "role": "Owner", 
                     "radio": percentage_maker(masterData, Owner, Q10_Television_Radio_words ), 
                     "parent": percentage_maker(masterData, Owner,Q10_Parent_Guardian_words),
                     "others_words": percentage_maker(masterData, Owner, Q10_Other_words ),
                     "supervisor": percentage_maker(masterData, Owner, Q10_Supervisor_words),
                     "family": percentage_maker(masterData, Owner, Q10_Family_Friend_words ),
-                    },
-                    {
+                    }),
+                    object_normalizer_bar2({
                     "role": "Manager", 
                     "radio": percentage_maker(masterData, Manager, Q10_Television_Radio_words ), 
                     "parent": percentage_maker(masterData, Manager,Q10_Parent_Guardian_words),
                     "others_words": percentage_maker(masterData, Manager, Q10_Other_words ),
                     "supervisor": percentage_maker(masterData, Manager, Q10_Supervisor_words),
                     "family": percentage_maker(masterData, Manager, Q10_Family_Friend_words ),
-                    },
-                    {
+                    }),
+                    object_normalizer_bar2({
                     "role": "Teacher", 
                     "radio": percentage_maker(masterData, Teacher, Q10_Television_Radio_words ), 
                     "parent": percentage_maker(masterData, Teacher,Q10_Parent_Guardian_words),
                     "others_words": percentage_maker(masterData, Teacher, Q10_Other_words ),
                     "supervisor": percentage_maker(masterData, Teacher, Q10_Supervisor_words),
                     "family": percentage_maker(masterData, Teacher, Q10_Family_Friend_words ),
-                    }, 
-                    {
+                    }), 
+                    object_normalizer_bar2({
                     "role": "Other", 
                     "radio": percentage_maker(masterData, Other, Q10_Television_Radio_words ), 
                     "parent": percentage_maker(masterData, Other,Q10_Parent_Guardian_words),
                     "others_words": percentage_maker(masterData, Other, Q10_Other_words ),
                     "supervisor": percentage_maker(masterData, Other, Q10_Supervisor_words),
                     "family": percentage_maker(masterData, Other, Q10_Family_Friend_words ),
-                    }, 
+                    }), 
                    ]
 
     return jsonify(roles_how_informed_data)
-
-
-
-if __name__ == '__main__':
-        app.run(debug=True)
