@@ -5,10 +5,10 @@ name = "pypi"
 
 [packages]
 flask = "*"
-pandas = "*"
 openpyxl = "*"
 numpy = "*"
 flask-cors = "*"
+pandas = "*"
 
 [dev-packages]
 
